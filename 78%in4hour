@@ -1,0 +1,61 @@
+//@version=5
+strategy(title="EMA Crossover with Relaxed Filters and 1.5% Target", shorttitle="EMA + Target", overlay=true)
+
+// --- Input for Lookback Period ---
+lookBack = input.int(20, title="Lookback Period", minval=1)
+angleLookback = input.int(5, title="Angle Lookback Period", minval=1) // For calculating the slope of the EMA
+rsiLength = input.int(14, title="RSI Length", minval=1) // RSI Length for filter
+rsiOverbought = input.int(70, title="RSI Overbought Level", minval=1)
+rsiOversold = input.int(30, title="RSI Oversold Level", minval=1)
+
+// --- Calculate EMAs ---
+ema9 = ta.ema(close, 9)
+ema20 = ta.ema(close, 21)
+
+// --- Calculate RSI for Confirmation ---
+rsi = ta.rsi(close, rsiLength)
+
+// --- Calculate Support and Resistance ---
+support = ta.lowest(low, lookBack)
+resistance = ta.highest(high, lookBack)
+
+// --- Angle Calculation: Slope of EMA over the angleLookback bars ---
+slope9 = (ema9 - ema9[angleLookback]) / angleLookback
+slope20 = (ema20 - ema20[angleLookback]) / angleLookback
+
+// --- Identify the EMA crossover and angle condition ---
+longCondition = ta.crossover(ema9, ema20) and slope9 > 0.0005 // Relax slope condition
+shortCondition = ta.crossunder(ema9, ema20) and slope9 < -0.0005 // Relax slope condition
+
+// --- Detect First Fully Bullish or Bearish Candle ---
+firstGreenCandle = close > open
+firstRedCandle = close < open
+
+// --- Plot the EMAs, Support, and Resistance ---
+plot(ema9, color=color.red, linewidth=2, title="9 EMA")
+plot(ema20, color=color.blue, linewidth=2, title="20 EMA")
+plot(support, color=color.blue, linewidth=2, title="Support Line")
+plot(resistance, color=color.red, linewidth=2, title="Resistance Line")
+
+// --- Execute Strategy: Buy and Sell Conditions ---
+if (longCondition and firstGreenCandle)
+    strategy.entry("Long", strategy.long)
+
+if (shortCondition and firstRedCandle)
+    strategy.entry("Short", strategy.short)
+
+// --- Take Profit (1.5%) ---
+longTakeProfitPrice = strategy.position_avg_price * 1.015 // 1.5% profit target for long trades
+shortTakeProfitPrice = strategy.position_avg_price * 0.985 // 1.5% profit target for short trades
+
+// Exit strategy: take profit when the price reaches 1.5% gain
+strategy.exit("Take Profit Long", from_entry="Long", limit=longTakeProfitPrice)
+strategy.exit("Take Profit Short", from_entry="Short", limit=shortTakeProfitPrice)
+
+// --- Plot the Conditions for Debugging ---
+plotshape(series=longCondition and firstGreenCandle, location=location.belowbar, color=color.green, style=shape.labelup, title="Buy Signal", text="BUY")
+plotshape(series=shortCondition and firstRedCandle, location=location.abovebar, color=color.red, style=shape.labeldown, title="Sell Signal", text="SELL")
+
+// --- Alert Conditions for Live Notifications ---
+alertcondition(longCondition and firstGreenCandle, title="Long Signal", message="Buy Signal Generated!")
+alertcondition(shortCondition and firstRedCandle, title="Short Signal", message="Sell Signal Generated!")
