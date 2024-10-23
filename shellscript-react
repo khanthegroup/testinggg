@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Create a new Vite project with React
+npx create-vite@latest thegroup-trading-app --template react
+
+# Navigate into the project directory
+cd tsdf
+
+# Create the required directory structure
+mkdir -p .idea/inspectionProfiles
+mkdir -p build/css
+mkdir -p build/fonts
+mkdir -p build/images
+mkdir -p build/static/js
+mkdir -p public/css
+mkdir -p public/fonts
+mkdir -p public/images
+mkdir -p src/assets/companyIcons
+mkdir -p src/assets/Fonts
+mkdir -p src/assets/images
+mkdir -p src/components
+mkdir -p src/locales
+mkdir -p src/services/api
+mkdir -p src/services/websocket
+mkdir -p src/themes
+mkdir -p src/utils
+
+# Notify user
+echo "Project setup complete with the specified directory structure."
